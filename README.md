@@ -1,6 +1,5 @@
 # Ansible WireGuard
-
-This Ansible script install a Wireguard VPN server on top of AML2023.
+This Ansible playbook to install a Wireguard VPN server on top of AML2023.
 
 ## Requirement
 
@@ -11,9 +10,11 @@ On your client laptop:
   umask 077
   wg genkey | tee privatekey | wg pubkey > publickey
   ```
-- Add this key to server config and bring down/up wg interface `/etc/wireguard/wg0.conf`
+- Add this key to server config `/etc/wireguard/wg0.conf` and bring down/up wg interface.
 
-## Clone repo
+## If you want to run it manually on server follow -->
+
+## Clone the repo
 ```bash
 cd ~
 git clone git@github.com:junoteam/wg-ansible-playbook.git wg-ansible-playbook/
