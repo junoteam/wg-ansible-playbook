@@ -1,0 +1,86 @@
+---
+- name: Setup Wireguard Server
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Set ipv4 Forwarding
+      sysctl:
+        name: net.ipv4.conf.all.forwarding
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Make sysctl changes to be permament
+      lineinfile:
+        path: /etc/sysctl.d/01-forwarding.conf
+        line: 'net.ipv4.conf.all.forwarding=1'
+        create: yes
+
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Import WireGuard keys
+      rpm_key:
+        key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+        state: present
+
+    - name: Add WireGuard repository
+      yum_repository:
+        name: elrepo
+        description: ELRepo.org Community Enterprise Linux Repository - EL7
+        baseurl: http://elrepo.org/linux/elrepo/el7/$basearch/
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+
+    - name: Install WireGuard tools
+      yum:
+        name: wireguard-tools
+        state: present
+
+    - name: mkdir -p /etc/wireguard/keys
+      file:
+        path: /etc/wireguard/keys
+        state: directory
+
+    - name: umask 077
+      shell: umask 077
+
+    - name: Creating server privatekey and publickey
+      shell: wg genkey | tee privatekey | wg pubkey > publickey
+      args:
+        chdir: /etc/wireguard/keys
+
+    - name: cat privatekey => var_privatekey
+      shell: cat privatekey
+      register: var_privatekey
+      args:
+        chdir: /etc/wireguard/keys
+
+    - name: Creating /etc/wireguard/wg0.conf
+      template:
+        src: wireguard_server
+        dest: /etc/wireguard/wg0.conf
+
+    - name: Starting wg service
+      systemd:
+        state: started
+        name: wg-quick@wg0
+        enabled: yes
+
+    - name: Check server public IP
+      shell: curl https://ipinfo.io/ip
+      register: var_server_ip
+
+    - name: cat publickey => var_publickey
+      shell: cat publickey
+      register: var_publickey
+      args:
+        chdir: /etc/wireguard/keys
+
+    - debug:
+        msg: Server public IP is {{ var_server_ip.stdout }}, Server public key is {{ var_publickey.stdout }}

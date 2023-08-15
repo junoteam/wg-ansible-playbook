@@ -1,0 +1,22 @@
+---
+- name: Setup iptables and install git on server
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install iptables-services
+      yum:
+        name: iptables-services
+        state: present
+
+    - name: Enable and start iptables service
+      service:
+        name: iptables
+        enabled: yes
+        state: started
