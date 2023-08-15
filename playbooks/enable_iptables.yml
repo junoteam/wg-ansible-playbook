@@ -1,5 +1,5 @@
 ---
-- name: Setup iptables and install git on server
+- name: Install and enable iptables on server
   hosts: localhost
   connection: local
   become: yes
